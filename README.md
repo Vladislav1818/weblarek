@@ -324,7 +324,7 @@ interface IOrderResponse {
 
 #### Поля
 
-- `data: Partial<IBuyer>` — объект с данными покупателя.
+- `data: IBuyer` — объект с данными покупателя.
 
 #### Конструктор
 
@@ -333,11 +333,9 @@ interface IOrderResponse {
 #### Методы
 
 - `setData(data: Partial<IBuyer>): void` — сохраняет переданные данные покупателя, не удаляя уже сохранённые поля.
-- `getData(): Partial<IBuyer>` — возвращает объект с данными покупателя.
-- `clear(): void` — очищает данные покупателя.
+- `getData(): IBuyer` — возвращает объект с данными покупателя.
+- `clear(): void` — очищает данные покупателя, возвращая начальные значения полей.
 - `validate(): TBuyerErrors` — валидирует все поля покупателя.
-- `validateStepOne(): TBuyerErrors` — валидирует первый шаг оформления заказа (`payment`, `address`).
-- `validateStepTwo(): TBuyerErrors` — валидирует второй шаг оформления заказа (`email`, `phone`).
 
 Поле считается валидным, если оно не пустое.
 

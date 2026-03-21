@@ -52,15 +52,14 @@ buyerModel.setData({
 	address: 'Москва, ул. Пушкина, д. 10',
 });
 console.log('Данные покупателя после первого шага:', buyerModel.getData());
-console.log('Ошибки первого шага:', buyerModel.validateStepOne());
+console.log('Ошибки валидации после первого заполнения:', buyerModel.validate());
 
 buyerModel.setData({
 	email: 'test@test.ru',
 	phone: '+79990000000',
 });
 console.log('Данные покупателя после второго шага:', buyerModel.getData());
-console.log('Ошибки второго шага:', buyerModel.validateStepTwo());
-console.log('Полная валидация:', buyerModel.validate());
+console.log('Ошибки валидации после второго заполнения:', buyerModel.validate());
 
 buyerModel.clear();
 console.log('Данные покупателя после очистки:', buyerModel.getData());

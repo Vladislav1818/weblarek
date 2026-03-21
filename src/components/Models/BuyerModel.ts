@@ -1,7 +1,12 @@
-import { IBuyer, TBuyerErrors } from '../../types';
+import { IBuyer, TBuyerErrors, TPayment } from '../../types';
 
 export class BuyerModel {
-	private data: Partial<IBuyer> = {};
+	private data: IBuyer = {
+		payment: '' as TPayment,
+		email: '',
+		phone: '',
+		address: '',
+	};
 
 	setData(data: Partial<IBuyer>): void {
 		this.data = {
@@ -10,12 +15,17 @@ export class BuyerModel {
 		};
 	}
 
-	getData(): Partial<IBuyer> {
+	getData(): IBuyer {
 		return { ...this.data };
 	}
 
 	clear(): void {
-		this.data = {};
+		this.data = {
+			payment: '' as TPayment,
+			email: '',
+			phone: '',
+			address: '',
+		};
 	}
 
 	validate(): TBuyerErrors {
@@ -25,43 +35,15 @@ export class BuyerModel {
 			errors.payment = 'Не выбран способ оплаты';
 		}
 
-		if (!this.data.address || this.data.address.trim() === '') {
+		if (!this.data.address.trim()) {
 			errors.address = 'Не указан адрес доставки';
 		}
 
-		if (!this.data.email || this.data.email.trim() === '') {
+		if (!this.data.email.trim()) {
 			errors.email = 'Укажите email';
 		}
 
-		if (!this.data.phone || this.data.phone.trim() === '') {
-			errors.phone = 'Укажите телефон';
-		}
-
-		return errors;
-	}
-
-	validateStepOne(): TBuyerErrors {
-		const errors: TBuyerErrors = {};
-
-		if (!this.data.payment) {
-			errors.payment = 'Не выбран способ оплаты';
-		}
-
-		if (!this.data.address || this.data.address.trim() === '') {
-			errors.address = 'Не указан адрес доставки';
-		}
-
-		return errors;
-	}
-
-	validateStepTwo(): TBuyerErrors {
-		const errors: TBuyerErrors = {};
-
-		if (!this.data.email || this.data.email.trim() === '') {
-			errors.email = 'Укажите email';
-		}
-
-		if (!this.data.phone || this.data.phone.trim() === '') {
+		if (!this.data.phone.trim()) {
 			errors.phone = 'Укажите телефон';
 		}
 
