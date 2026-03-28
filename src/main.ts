@@ -10,7 +10,8 @@ import { LarekApi } from './components/LarekApi';
 import { API_URL, CDN_URL } from './utils/constants';
 import { cloneTemplate, ensureElement } from './utils/utils';
 
-import { Page } from './components/View/Page';
+import { Header } from './components/View/Header';
+import { Gallery } from './components/View/Gallery';
 import { Modal } from './components/View/Modal';
 import { CatalogCard } from './components/View/CatalogCard';
 import { PreviewCard } from './components/View/PreviewCard';
@@ -21,8 +22,6 @@ import { ContactsForm } from './components/View/ContactsForm';
 import { Success } from './components/View/Success';
 
 import { IBuyer, IOrder, IProduct, TBuyerErrors } from './types';
-
-type TModalView = 'preview' | 'basket' | 'order' | 'contacts' | 'success' | null;
 
 const events = new EventEmitter();
 
@@ -38,7 +37,8 @@ const productsModel = new ProductsModel(events);
 const basketModel = new BasketModel(events);
 const buyerModel = new BuyerModel(events);
 
-const page = new Page(document.body, events);
+const header = new Header(ensureElement<HTMLElement>('.header'), events);
+const gallery = new Gallery(ensureElement<HTMLElement>('.gallery'));
 const modal = new Modal(ensureElement<HTMLElement>('#modal-container'), events);
 
 const basketView = new BasketView(
@@ -56,6 +56,15 @@ const contactsForm = new ContactsForm(
 	events
 );
 
+const previewCard = new PreviewCard(
+	cloneTemplate<HTMLElement>('#card-preview'),
+	{
+		onClick: () => {
+			events.emit('product:toggle-basket');
+		},
+	}
+);
+
 const successView = new Success(
 	cloneTemplate<HTMLElement>('#success'),
 	{
@@ -63,10 +72,8 @@ const successView = new Success(
 	}
 );
 
-let currentView: TModalView = null;
-
-function getErrorsText(errors: TBuyerErrors): string {
-	return Object.values(errors).filter(Boolean).join('. ');
+function getErrorsText(errors: Array<string | undefined>): string {
+	return errors.filter(Boolean).join('. ');
 }
 
 function createCatalogCards(): HTMLElement[] {
@@ -99,106 +106,76 @@ function createBasketCards(): HTMLElement[] {
 	});
 }
 
-function renderCatalog(): void {
-	page.render({
-		catalog: createCatalogCards(),
-		counter: basketModel.getCount(),
+function syncCatalog(): void {
+	gallery.items = createCatalogCards();
+}
+
+function syncHeader(): void {
+	header.counter = basketModel.getCount();
+}
+
+function syncBasketView(): void {
+	basketView.render({
+		items: createBasketCards(),
+		total: basketModel.getTotal(),
+		valid: basketModel.getCount() > 0,
 	});
 }
 
-function renderPreview(item: IProduct): void {
-	currentView = 'preview';
+function syncPreview(): HTMLElement | null {
+	const item = productsModel.getPreview();
 
-	const card = new PreviewCard(
-		cloneTemplate<HTMLElement>('#card-preview'),
-		{
-			onClick: (event: MouseEvent) => {
-				event.preventDefault();
-				events.emit('product:toggle-basket', item);
-			},
-		}
-	);
+	if (!item) {
+		return null;
+	}
 
-	modal.render({
-		content: card.render({
-			...item,
-			inBasket: basketModel.hasItem(item.id),
-		}),
+	return previewCard.render({
+		...item,
+		inBasket: basketModel.hasItem(item.id),
 	});
 }
 
-function renderBasket(): void {
-	currentView = 'basket';
-
-	modal.render({
-		content: basketView.render({
-			items: createBasketCards(),
-			total: basketModel.getTotal(),
-			valid: basketModel.getCount() > 0,
-		}),
-	});
-}
-
-function renderOrderForm(): void {
-	currentView = 'order';
-
+function syncBuyerForms(): void {
 	const data = buyerModel.getData();
-	const errors = buyerModel.validateStepOne();
+	const errors: TBuyerErrors = buyerModel.validate();
 
-	modal.render({
-		content: orderForm.render({
-			payment: data.payment,
-			address: data.address,
-			valid: Object.keys(errors).length === 0,
-			errors: getErrorsText(errors),
-		}),
+	orderForm.render({
+		payment: data.payment,
+		address: data.address,
+		valid: !errors.payment && !errors.address,
+		errors: getErrorsText([errors.payment, errors.address]),
 	});
-}
 
-function renderContactsForm(): void {
-	currentView = 'contacts';
-
-	const data = buyerModel.getData();
-	const errors = buyerModel.validateStepTwo();
-
-	modal.render({
-		content: contactsForm.render({
-			email: data.email,
-			phone: data.phone,
-			valid: Object.keys(errors).length === 0,
-			errors: getErrorsText(errors),
-		}),
-	});
-}
-
-function renderSuccess(total: number): void {
-	currentView = 'success';
-
-	modal.render({
-		content: successView.render({
-			total,
-		}),
+	contactsForm.render({
+		email: data.email,
+		phone: data.phone,
+		valid: !errors.email && !errors.phone,
+		errors: getErrorsText([errors.email, errors.phone]),
 	});
 }
 
 events.on('products:changed', () => {
-	renderCatalog();
+	syncCatalog();
 });
 
 events.on('card:select', (item: IProduct) => {
 	productsModel.setPreview(item);
 });
 
-events.on('preview:changed', (item: IProduct) => {
-	const preview = item || productsModel.getPreview();
+events.on('preview:changed', () => {
+	const content = syncPreview();
 
-	if (preview) {
-		renderPreview(preview);
+	if (content) {
+		modal.render({ content });
 	}
 });
 
-events.on('product:toggle-basket', (item: IProduct) => {
-	modal.close();
+events.on('product:toggle-basket', () => {
+	const item = productsModel.getPreview();
+
+	if (!item || item.price === null) {
+		return;
+	}
 
 	if (basketModel.hasItem(item.id)) {
 		basketModel.removeItem(item);
@@ -208,7 +185,9 @@ events.on('product:toggle-basket', (item: IProduct) => {
 });
 
 events.on('basket:open', () => {
-	renderBasket();
+	modal.render({
+		content: basketView.render(),
+	});
 });
 
 events.on('basket:item-remove', (item: IProduct) => {
@@ -216,22 +195,15 @@ events.on('basket:item-remove', (item: IProduct) => {
 });
 
 events.on('basket:changed', () => {
-	page.counter = basketModel.getCount();
-
-	if (currentView === 'basket') {
-		renderBasket();
-	}
-
-	if (currentView === 'preview') {
-		const preview = productsModel.getPreview();
-		if (preview) {
-			renderPreview(preview);
-		}
-	}
+	syncHeader();
+	syncBasketView();
+	syncPreview();
 });
 
 events.on('order:open', () => {
-	renderOrderForm();
+	modal.render({
+		content: orderForm.render(),
+	});
 });
 
 events.on(
@@ -244,34 +216,16 @@ events.on(
 );
 
 events.on('buyer:changed', () => {
-	if (currentView === 'order') {
-		renderOrderForm();
-	}
-
-	if (currentView === 'contacts') {
-		renderContactsForm();
-	}
+	syncBuyerForms();
 });
 
 events.on('order:submit', () => {
-	const errors = buyerModel.validateStepOne();
-
-	if (Object.keys(errors).length > 0) {
-		renderOrderForm();
-		return;
-	}
-
-	renderContactsForm();
+	modal.render({
+		content: contactsForm.render(),
+	});
 });
 
 events.on('contacts:submit', () => {
-	const errors = buyerModel.validateStepTwo();
-
-	if (Object.keys(errors).length > 0) {
-		renderContactsForm();
-		return;
-	}
-
 	const buyer = buyerModel.getData();
 
 	const order: IOrder = {
@@ -285,16 +239,21 @@ events.on('contacts:submit', () => {
 		.then((result) => {
 			basketModel.clear();
 			buyerModel.clear();
-			renderSuccess(result.total);
+
+			modal.render({
+				content: successView.render({
+					total: result.total,
+				}),
+			});
 		})
 		.catch((err) => {
 			console.error('Ошибка оформления заказа:', err);
 		});
 });
 
-events.on('modal:close', () => {
-	currentView = null;
-});
+syncHeader();
+syncBasketView();
+syncBuyerForms();
 
 larekApi
 	.getProducts()

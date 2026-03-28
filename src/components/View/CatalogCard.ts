@@ -1,7 +1,8 @@
 import { IProduct } from '../../types';
-import { Card, ICardActions } from './Card';
+import { ICardActions } from './Card';
+import { ProductCard } from './ProductCard';
 
-export class CatalogCard extends Card<IProduct> {
+export class CatalogCard extends ProductCard<IProduct> {
 	constructor(container: HTMLElement, actions?: ICardActions) {
 		super(container, actions);
 	}

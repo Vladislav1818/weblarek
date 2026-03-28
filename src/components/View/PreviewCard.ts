@@ -1,16 +1,16 @@
 import { IProduct } from '../../types';
 import { ensureElement } from '../../utils/utils';
-import { Card } from './Card';
+import { ProductCard } from './ProductCard';
 
 interface IPreviewCardActions {
-	onClick: (event: MouseEvent) => void;
+	onClick: () => void;
 }
 
 export interface IPreviewCardData extends IProduct {
 	inBasket: boolean;
 }
 
-export class PreviewCard extends Card<IPreviewCardData> {
+export class PreviewCard extends ProductCard<IPreviewCardData> {
 	protected descriptionElement: HTMLElement;
 	protected buttonElement: HTMLButtonElement;
 
@@ -20,7 +20,10 @@ export class PreviewCard extends Card<IPreviewCardData> {
 		this.descriptionElement = ensureElement<HTMLElement>('.card__text', container);
 		this.buttonElement = ensureElement<HTMLButtonElement>('.card__button', container);
 
-		this.buttonElement.addEventListener('click', actions.onClick);
+		this.buttonElement.addEventListener('click', (event) => {
+			event.preventDefault();
+			actions.onClick();
+		});
 	}
 
 	set description(value: string) {

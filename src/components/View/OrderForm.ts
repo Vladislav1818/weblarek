@@ -4,53 +4,53 @@ import { ensureElement } from '../../utils/utils';
 import { TPayment } from '../../types';
 
 interface IOrderForm {
-  payment: TPayment;
-  address: string;
+	payment: TPayment;
+	address: string;
 }
 
 export class OrderForm extends Form<IOrderForm> {
-  protected cardButton: HTMLButtonElement;
-  protected cashButton: HTMLButtonElement;
-  protected addressInput: HTMLInputElement;
+	protected cardButton: HTMLButtonElement;
+	protected cashButton: HTMLButtonElement;
+	protected addressInput: HTMLInputElement;
 
-  constructor(container: HTMLFormElement, events: IEvents) {
-    super(container, events);
+	constructor(container: HTMLFormElement, events: IEvents) {
+		super(container, events);
 
-    this.cardButton = ensureElement<HTMLButtonElement>('button[name=card]', container);
-    this.cashButton = ensureElement<HTMLButtonElement>('button[name=cash]', container);
-    this.addressInput = ensureElement<HTMLInputElement>('input[name=address]', container);
+		this.cardButton = ensureElement<HTMLButtonElement>('button[name=card]', container);
+		this.cashButton = ensureElement<HTMLButtonElement>('button[name=cash]', container);
+		this.addressInput = ensureElement<HTMLInputElement>('input[name=address]', container);
 
-    this.cardButton.addEventListener('click', (evt) => {
-      evt.preventDefault();
-      this.events.emit('form:change', {
-        field: 'payment',
-        value: 'card',
-      });
-    });
+		this.cardButton.addEventListener('click', (evt) => {
+			evt.preventDefault();
+			this.events.emit('form:change', {
+				field: 'payment',
+				value: 'card',
+			});
+		});
 
-    this.cashButton.addEventListener('click', (evt) => {
-      evt.preventDefault();
-      this.events.emit('form:change', {
-        field: 'payment',
-        value: 'cash',
-      });
-    });
-  }
+		this.cashButton.addEventListener('click', (evt) => {
+			evt.preventDefault();
+			this.events.emit('form:change', {
+				field: 'payment',
+				value: 'cash',
+			});
+		});
+	}
 
-  protected onSubmit(): void {
-    this.events.emit('order:submit');
-  }
+	protected onSubmit(): void {
+		this.events.emit('order:submit');
+	}
 
-  set payment(value: TPayment) {
-    this.cardButton.classList.toggle('button_alt-active', value === 'card');
-    this.cashButton.classList.toggle('button_alt-active', value === 'cash');
-  }
+	set payment(value: TPayment) {
+		this.cardButton.classList.toggle('button_alt-active', value === 'card');
+		this.cashButton.classList.toggle('button_alt-active', value === 'cash');
+	}
 
-  set address(value: string) {
-    this.addressInput.value = value;
-  }
+	set address(value: string) {
+		this.addressInput.value = value;
+	}
 
-  render(state: Partial<IOrderForm> & IFormState): HTMLFormElement {
-    return super.render(state);
-  }
+	render(state?: Partial<IOrderForm> & IFormState): HTMLFormElement {
+		return super.render(state);
+	}
 }
