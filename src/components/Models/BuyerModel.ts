@@ -1,52 +1,87 @@
 import { IBuyer, TBuyerErrors, TPayment } from '../../types';
+import { IEvents } from '../base/Events';
 
 export class BuyerModel {
-	private data: IBuyer = {
-		payment: '' as TPayment,
-		email: '',
-		phone: '',
-		address: '',
-	};
+  private data: IBuyer = {
+    payment: '' as TPayment,
+    email: '',
+    phone: '',
+    address: '',
+  };
 
-	setData(data: Partial<IBuyer>): void {
-		this.data = {
-			...this.data,
-			...data,
-		};
-	}
+  constructor(private events: IEvents) {}
 
-	getData(): IBuyer {
-		return { ...this.data };
-	}
+  setData(data: Partial<IBuyer>): void {
+    this.data = {
+      ...this.data,
+      ...data,
+    };
 
-	clear(): void {
-		this.data = {
-			payment: '' as TPayment,
-			email: '',
-			phone: '',
-			address: '',
-		};
-	}
+    this.events.emit('buyer:changed', this.getData());
+  }
 
-	validate(): TBuyerErrors {
-		const errors: TBuyerErrors = {};
+  getData(): IBuyer {
+    return { ...this.data };
+  }
 
-		if (!this.data.payment) {
-			errors.payment = 'Не выбран способ оплаты';
-		}
+  clear(): void {
+    this.data = {
+      payment: '' as TPayment,
+      email: '',
+      phone: '',
+      address: '',
+    };
 
-		if (!this.data.address.trim()) {
-			errors.address = 'Не указан адрес доставки';
-		}
+    this.events.emit('buyer:changed', this.getData());
+  }
 
-		if (!this.data.email.trim()) {
-			errors.email = 'Укажите email';
-		}
+  validate(): TBuyerErrors {
+    const errors: TBuyerErrors = {};
 
-		if (!this.data.phone.trim()) {
-			errors.phone = 'Укажите телефон';
-		}
+    if (!this.data.payment) {
+      errors.payment = 'Не выбран способ оплаты';
+    }
 
-		return errors;
-	}
+    if (!this.data.address.trim()) {
+      errors.address = 'Не указан адрес доставки';
+    }
+
+    if (!this.data.email.trim()) {
+      errors.email = 'Укажите email';
+    }
+
+    if (!this.data.phone.trim()) {
+      errors.phone = 'Укажите телефон';
+    }
+
+    return errors;
+  }
+
+  validateStepOne(): TBuyerErrors {
+    const errors: TBuyerErrors = {};
+
+    if (!this.data.payment) {
+      errors.payment = 'Не выбран способ оплаты';
+    }
+
+    if (!this.data.address.trim()) {
+      errors.address = 'Не указан адрес доставки';
+    }
+
+    return errors;
+  }
+
+  validateStepTwo(): TBuyerErrors {
+    const errors: TBuyerErrors = {};
+
+    if (!this.data.email.trim()) {
+      errors.email = 'Укажите email';
+    }
+
+    if (!this.data.phone.trim()) {
+      errors.phone = 'Укажите телефон';
+    }
+
+    return errors;
+  }
 }
